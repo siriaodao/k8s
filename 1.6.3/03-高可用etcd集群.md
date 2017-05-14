@@ -22,8 +22,8 @@ $ cp ca.pem kubernetes-key.pem kubernetes.pem /etc/kubernetes/ssl
 
 ``` bash
 $ https://github.com/coreos/etcd/releases/download/v3.1.5/etcd-v3.1.5-linux-amd64.tar.gz
-$ tar -xvf etcd-v3.1.4-linux-amd64.tar.gz
-$ sudo mv etcd-v3.1.4-linux-amd64/etcd* /root/local/bin
+$ tar -xvf etcd-v3.1.5-linux-amd64.tar.gz
+$ sudo mv etcd-v3.1.5-linux-amd64/etcd* /usr/local/bin
 ```
 
 ## 创建 etcd 的 systemd unit 文件
@@ -42,7 +42,7 @@ Documentation=https://github.com/coreos
 Type=notify
 WorkingDirectory=/var/lib/etcd/
 EnvironmentFile=-/etc/etcd/etcd.conf
-ExecStart=/usr/bin/etcd \
+ExecStart=/usr/local/bin/etcd \
   --name ${ETCD_NAME} \
   --cert-file=/etc/kubernetes/ssl/kubernetes.pem \
   --key-file=/etc/kubernetes/ssl/kubernetes-key.pem \
@@ -75,7 +75,7 @@ WantedBy=multi-user.target
 
 环境变量配置文件`/etc/etcd/etcd.conf`。
 
-```Ini
+```ini
 # [member]
 ETCD_NAME=infra1
 ETCD_DATA_DIR="/var/lib/etcd"
@@ -88,7 +88,7 @@ ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
 ETCD_ADVERTISE_CLIENT_URLS="https://172.20.0.113:2379"
 ```
 
-这是172.20.0.113节点的配置，其他两个etcd节点只要将上面的IP地址改成相应节点的IP地址即可。
+这是172.20.0.113节点的配置，其他两个etcd节点只要将上面的IP地址改成相应节点的IP地址即可。ETCD_NAME换成对应节点的infra1/2/3。
 
 ## 启动 etcd 服务
 

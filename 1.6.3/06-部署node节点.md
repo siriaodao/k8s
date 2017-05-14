@@ -24,6 +24,12 @@ apiserver  bootstrap.kubeconfig  config  controller-manager  kubelet  kube-proxy
 
 参考我之前写的文章[Kubernetes基于Flannel的网络配置](http://rootsongjc.github.io/blogs/kubernetes-network-config/)，之前没有配置TLS，现在需要在serivce配置文件中增加TLS配置。
 
+直接使用yum安装flanneld即可。
+
+```shell
+yum install -y flannel
+```
+
 service配置文件`/usr/lib/systemd/system/flanneld.service`。
 
 ```ini
@@ -39,7 +45,10 @@ Before=docker.service
 Type=notify
 EnvironmentFile=/etc/sysconfig/flanneld
 EnvironmentFile=-/etc/sysconfig/docker-network
-ExecStart=/usr/bin/flanneld-start $FLANNEL_OPTIONS
+ExecStart=/usr/bin/flanneld-start \
+  -etcd-endpoints=${ETCD_ENDPOINTS} \
+  -etcd-prefix=${ETCD_PREFIX} \
+  FLANNEL_OPTIONS
 ExecStartPost=/usr/libexec/flannel/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
 Restart=on-failure
 
@@ -54,11 +63,11 @@ RequiredBy=docker.service
 # Flanneld configuration options  
 
 # etcd url location.  Point this to the server where etcd runs
-FLANNEL_ETCD_ENDPOINTS="https://172.20.0.113:2379,https://172.20.0.114:2379,https://172.20.0.115:2379"
+ETCD_ENDPOINTS="https://172.20.0.113:2379,https://172.20.0.114:2379,https://172.20.0.115:2379"
 
 # etcd config key.  This is the configuration key that flannel queries
 # For address range assignment
-FLANNEL_ETCD_PREFIX="/kube-centos/network"
+ETCD_PREFIX="/kube-centos/network"
 
 # Any additional options that you want to pass
 FLANNEL_OPTIONS="-etcd-cafile=/etc/kubernetes/ssl/ca.pem -etcd-certfile=/etc/kubernetes/ssl/kubernetes.pem -etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem"
@@ -80,10 +89,10 @@ etcdctl --endpoints=https://172.20.0.113:2379,https://172.20.0.114:2379,https://
   --ca-file=/etc/kubernetes/ssl/ca.pem \
   --cert-file=/etc/kubernetes/ssl/kubernetes.pem \
   --key-file=/etc/kubernetes/ssl/kubernetes-key.pem \
-  mk /kube-centos/network/config "{ \"Network\": \"172.30.0.0/16\", \"SubnetLen\": 24, \"Backend\": { \"Type\": \"vxlan\" } }"
+  mk /kube-centos/network/config '{"Network":"172.30.0.0/16","SubnetLen":24,"Backend":{"Type":"vxlan"}}'
 ```
 
-注意：vxlan的性能损耗大约是40%～50%，如果将Type设置为host-gw，网络性能损耗只有10%左右，而配置没有什么不同，只是要保证kubernetes的所有node都在同一个二层网络中。
+如果你要使用`host-gw`模式，可以直接将vxlan改成`host-gw`即可。
 
 **配置Docker**
 
@@ -209,12 +218,12 @@ $ wget https://dl.k8s.io/v1.6.0/kubernetes-server-linux-amd64.tar.gz
 $ tar -xzvf kubernetes-server-linux-amd64.tar.gz
 $ cd kubernetes
 $ tar -xzvf  kubernetes-src.tar.gz
-$ cp -r ./server/bin/{kube-proxy,kubelet} /usr/bin/
+$ cp -r ./server/bin/{kube-proxy,kubelet} /usr/local/bin/
 ```
 
 ### 创建 kubelet 的service配置文件
 
-文件位置`/usr/lib/systemd/system/kubelet.serivce`。
+文件位置`/usr/lib/systemd/system/kubelet.service`。
 
 ```ini
 [Unit]
@@ -227,7 +236,7 @@ Requires=docker.service
 WorkingDirectory=/var/lib/kubelet
 EnvironmentFile=-/etc/kubernetes/config
 EnvironmentFile=-/etc/kubernetes/kubelet
-ExecStart=/usr/bin/kubelet \
+ExecStart=/usr/local/bin/kubelet \
             $KUBE_LOGTOSTDERR \
             $KUBE_LOG_LEVEL \
             $KUBELET_API_SERVER \
@@ -244,6 +253,8 @@ WantedBy=multi-user.target
 ```
 
 kubelet的配置文件`/etc/kubernetes/kubelet`。其中的IP地址更改为你的每台node节点的IP地址。
+
+注意：`/var/lib/kubelet`需要手动创建。
 
 ``` bash
 ###
@@ -322,6 +333,8 @@ $ ls -l /etc/kubernetes/ssl/kubelet*
 -rw------- 1 root root 1675 Apr  7 02:07 /etc/kubernetes/ssl/kubelet.key
 ```
 
+注意：假如你更新kubernetes的证书，只要没有更新`token.csv`，当重启kubelet后，该node就会自动加入到kuberentes集群中，而不会重新发送`certificaterequest`，也不需要在master节点上执行`kubectl certificate approve`操作。前提是不要删除node节点上的`/etc/kubernetes/ssl/kubelet*`和`/etc/kubernetes/kubelet.kubeconfig`文件。否则kubelet启动时会提示找不到证书而失败。
+
 ## 配置 kube-proxy
 
 **创建 kube-proxy 的service配置文件**
@@ -337,7 +350,7 @@ After=network.target
 [Service]
 EnvironmentFile=-/etc/kubernetes/config
 EnvironmentFile=-/etc/kubernetes/proxy
-ExecStart=/usr/bin/kube-proxy \
+ExecStart=/usr/local/bin/kube-proxy \
 	    $KUBE_LOGTOSTDERR \
 	    $KUBE_LOG_LEVEL \
 	    $KUBE_MASTER \
@@ -425,6 +438,8 @@ Commercial support is available at
 </body>
 </html>
 ```
+
+提示：上面的测试示例中使用的nginx是我的私有镜像仓库中的镜像`sz-pg-oam-docker-hub-001.tendcloud.com/library/nginx:1.9`，大家在测试过程中请换成自己的nginx镜像地址。
 
 访问`172.20.0.113:32724`或`172.20.0.114:32724`或者`172.20.0.115:32724`都可以得到nginx的页面。
 

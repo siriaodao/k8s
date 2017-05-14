@@ -11,7 +11,9 @@ kubernetes master 节点包含的组件：
 + `kube-scheduler`、`kube-controller-manager` 和 `kube-apiserver` 三者的功能紧密相关；
 + 同时只能有一个 `kube-scheduler`、`kube-controller-manager` 进程处于工作状态，如果运行多个，则需要通过选举产生一个 leader；
 
-本文档记录部署一个三个节点的高可用 kubernetes master 集群步骤。（后续创建一个 load balancer 来代理访问 kube-apiserver 的请求）
+~~本文档记录部署一个三个节点的高可用 kubernetes master 集群步骤。（后续创建一个 load balancer 来代理访问 kube-apiserver 的请求）~~
+
+暂时未实现master节点的高可用。
 
 ## TLS 证书文件
 
@@ -55,7 +57,7 @@ $ tar -xzvf  kubernetes-src.tar.gz
 将二进制文件拷贝到指定路径
 
 ``` bash
-$ cp -r server/bin/{kube-apiserver,kube-controller-manager,kube-scheduler,kubectl,kube-proxy,kubelet} /root/local/bin/
+$ cp -r server/bin/{kube-apiserver,kube-controller-manager,kube-scheduler,kubectl,kube-proxy,kubelet} /usr/local/bin/
 ```
 
 ## 配置和启动 kube-apiserver
@@ -74,7 +76,7 @@ After=etcd.service
 [Service]
 EnvironmentFile=-/etc/kubernetes/config
 EnvironmentFile=-/etc/kubernetes/apiserver
-ExecStart=/usr/bin/kube-apiserver \
+ExecStart=/usr/local/bin/kube-apiserver \
 	    $KUBE_LOGTOSTDERR \
 	    $KUBE_LOG_LEVEL \
 	    $KUBE_ETCD_SERVERS \
@@ -143,7 +145,7 @@ KUBE_API_ADDRESS="--advertise-address=172.20.0.113 --bind-address=172.20.0.113 -
 #KUBELET_PORT="--kubelet-port=10250"
 #
 ## Comma separated list of nodes in the etcd cluster
-KUBE_ETCD_SERVERS="--etcd-servers=https://172.20.0.113:2379,172.20.0.114:2379,172.20.0.115:2379"
+KUBE_ETCD_SERVERS="--etcd-servers=https://172.20.0.113:2379,https://172.20.0.114:2379,https://172.20.0.115:2379"
 #
 ## Address range to use for services
 KUBE_SERVICE_ADDRESSES="--service-cluster-ip-range=10.254.0.0/16"
@@ -190,7 +192,7 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 [Service]
 EnvironmentFile=-/etc/kubernetes/config
 EnvironmentFile=-/etc/kubernetes/controller-manager
-ExecStart=/usr/bin/kube-controller-manager \
+ExecStart=/usr/local/bin/kube-controller-manager \
 	    $KUBE_LOGTOSTDERR \
 	    $KUBE_LOG_LEVEL \
 	    $KUBE_MASTER \
@@ -224,12 +226,12 @@ KUBE_CONTROLLER_MANAGER_ARGS="--address=127.0.0.1 --service-cluster-ip-range=10.
     NAME                 STATUS      MESSAGE                                                                                        ERROR
     scheduler            Unhealthy   Get http://127.0.0.1:10251/healthz: dial tcp 127.0.0.1:10251: getsockopt: connection refused   
     controller-manager   Healthy     ok                                                                                             
-    etcd-2               Unhealthy   Get http://172.20.0.113:2379/health: malformed HTTP response "\x15\x03\x01\x00\x02\x02"        
+    etcd-2               Healthy     {"health": "true"} 
     etcd-0               Healthy     {"health": "true"}                                                                             
     etcd-1               Healthy     {"health": "true"}  
     ```
 
-    参考：https://github.com/kubernetes-incubator/bootkube/issues/64
+    如果有组件report unhealthy请参考：https://github.com/kubernetes-incubator/bootkube/issues/64
 
 完整 unit 见 [kube-controller-manager.service](./systemd/kube-controller-manager.service)
 
@@ -245,7 +247,7 @@ $ systemctl start kube-controller-manager
 
 **创建 kube-scheduler的serivce配置文件**
 
-文件路径`/usr/lib/systemd/system/kube-scheduler.serivce`。
+文件路径`/usr/lib/systemd/system/kube-scheduler.service`。
 
 ```ini
 [Unit]
@@ -255,7 +257,7 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 [Service]
 EnvironmentFile=-/etc/kubernetes/config
 EnvironmentFile=-/etc/kubernetes/scheduler
-ExecStart=/usr/bin/kube-scheduler \
+ExecStart=/usr/local/bin/kube-scheduler \
             $KUBE_LOGTOSTDERR \
             $KUBE_LOG_LEVEL \
             $KUBE_MASTER \

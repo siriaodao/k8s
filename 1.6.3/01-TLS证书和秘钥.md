@@ -57,6 +57,8 @@ cfssl cfssl-bundle cfssl-certinfo cfssljson cfssl-newkey cfssl-scan
 
 在`$GOPATH/bin`目录下得到以cfssl开头的几个命令。
 
+注意：以下文章中出现的cat的文件名如果不存在需要手工创建。
+
 ## 创建 CA (Certificate Authority)
 
 **创建 CA 配置文件**
@@ -70,7 +72,7 @@ $ cat ca-config.json
 {
   "signing": {
     "default": {
-      "expiry": "8760h"
+      "expiry": "87600h"
     },
     "profiles": {
       "kubernetes": {
@@ -80,7 +82,7 @@ $ cat ca-config.json
             "server auth",
             "client auth"
         ],
-        "expiry": "8760h"
+        "expiry": "87600h"
       }
     }
   }
@@ -169,7 +171,7 @@ $ cat kubernetes-csr.json
 
 ``` bash
 $ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes kubernetes-csr.json | cfssljson -bare kubernetes
-$ ls kuberntes*
+$ ls kubernetes*
 kubernetes.csr  kubernetes-csr.json  kubernetes-key.pem  kubernetes.pem
 ```
 
