@@ -1,59 +1,24 @@
 # Kubernetes Handbook
 
-玩转Kubernetes，我就看kubernetes handbook！
+[Kubernetes](http://kubernetes.io)是Google基于[Borg](https://research.google.com/pubs/pub43438.html)开源的容器编排调度引擎，作为[CNCF](http://cncf.io)（Cloud Native Computing Foundation）最重要的组件之一，它的目标不仅仅是一个编排系统，而是提供一个规范，可以让你来描述集群的架构，定义服务的最终状态，它将自动得将系统达到和维持在这个状态。
 
-本书所有的组件安装、示例和操作等都基于**Kubernetes1.6.0**版本。
+本书记录了本人从零开始学习和使用Kubernetes的心路历程，着重于经验分享和总结，同时也会有相关的概念解析，希望能够帮助大家少踩坑，少走弯路。
 
-文章同步更新到[gitbook](https://www.gitbook.com/book/rootsongjc/kubernetes-handbook/details)，方便大家浏览和下载PDF。
+在写作本书时，安装的所有组件、所用示例和操作等皆基于**Kubernetes1.6.0**版本。
+
+[文章目录](SUMMARY.md)
 
 GitHub地址：https://github.com/rootsongjc/kubernetes-handbook
 
-## 目录
+Gitbook在线浏览：https://www.gitbook.com/book/rootsongjc/kubernetes-handbook/
 
-- [0.0 介绍](README.md)
-- [1.0 Kubernetes集群安装](00-kubernetes安装前言.md)
-  - [1.1 创建 TLS 通信所需的证书和秘钥](01-TLS证书和秘钥.md)
-  - [1.2 创建kubeconfig 文件](02-kubeconfig文件.md)
-  - [1.3 创建三节点的高可用etcd集群](03-高可用etcd集群.md)
-  - [1.4 安装kubectl命令行工具](04-kubectl命令行工具.md)
-  - [1.5 部署高可用master集群](05-部署高可用master集群.md)
-  - [1.6 部署node节点](06-部署node节点.md)
-  - [1.7 安装kubedns插件](07-安装kubedns插件.md)
-  - [1.8 安装dashboard插件](08-安装dashboard插件.md)
-  - [1.9 安装heapster插件](09-安装heapster插件.md)
-  - [1.10 安装EFK插件](10-安装EFK插件.md)
-- 2.0 Kubernetes服务发现与负载均衡
-  - [2.1 Ingress解析](11-ingress解析.md)
-  - [2.2 安装traefik ingress](12-安装traefik-ingress.md)
-  - [2.3 分布式负载测试](14-分布式负载测试.md)
-  - [2.4 kubernetes网络和集群性能测试](15-kubernetes网络和集群性能测试.md)
-  - [2.5 边缘节点配置](18-边缘节点配置.md)
-- 3.0 Kubernetes中的容器设计模式 TODO
-- 4.0 Kubernetes中的概念解析
-  - [4.1 Deployment概念解析](20-deployment概念解析.md)
-- 5.0 Kubernetes的安全设置
-  - [5.1 Kubernetes中的RBAC支持](13-kubernetes中的RBAC支持.md)
-- 6.0 Kubernetes网络配置
-  - [6.1 Kubernetes中的网络模式解析](16-kubernetes中的网络模式解析.md)
-- 7.0 Kubernetes存储配置
-  - [7.1 使用glusterfs做持久化存储](17-使用glusterfs做持久化存储.md)
-- 8.0 集群运维管理
-  - [8.1 服务滚动升级](19-服务滚动升级.md)
-- 9.0 Kubernetes领域应用
-  - 9.1 Spark on Kubernetes TODO
-- [10.0 问题记录](issues.md)
-
-## 说明
-
-文中涉及的配置文件和代码链接在gitbook中会无法打开，请下载github源码后，在MarkDown编辑器中打开，点击链接将跳转到你的本地目录，推荐使用[typaro](www.typorai.o)。
-
-[Kubernetes集群安装部分](00-kubernetes安装前言.md)（1.0-1.10章节）在[opsnull](https://github.com/opsnull/follow-me-install-kubernetes-cluster)的基础上进行了编辑、修改和整理而成。
-
-## 如何使用
+## 如何使用本书
 
 **在线浏览**
 
-访问gitbook：https://www.gitbook.com/book/rootsongjc/kubernetes-handbook/
+访问[gitbook](https://www.gitbook.com/book/rootsongjc/kubernetes-handbook/)
+
+文中涉及的配置文件和代码链接在gitbook中会无法打开，请下载github源码后，在MarkDown编辑器中打开，点击链接将跳转到你的本地目录，推荐使用[typora](www.typorai.o)。
 
 **本地查看**
 
@@ -67,6 +32,8 @@ GitHub地址：https://github.com/rootsongjc/kubernetes-handbook
 
 [下载Calibre](http://calibre-ebook.com/download)
 
+- **On Mac**
+
 在Mac下安装后，使用该命令创建链接
 
 ```
@@ -79,6 +46,14 @@ ln -s /Applications/calibre.app/Contents/MacOS/ebook-convert /usr/local/bin
 gitbook pdf . ./kubernetes-handbook.pdf
 ```
 
+- **On Windows**
+
+需要用到的工具：[calibre](http://calibre-ebook.com/)，[phantomjs](http://phantomjs.org/download.html)
+
+1. 将上述2个安装，calibre默认安装的路径`C:\Program Files\Calibre2`为你解压路径；
+2. 并将其目录均加入到系统变量path中,参考:目录添加到系统变量path中；
+3. 在cmd打开你需要转pdf的文件夹,输入`gitbook pdf`即可；
+
 **生成单个章节的pdf**
 
 使用`pandoc`和`latex`来生成pdf格式文档。
@@ -87,10 +62,33 @@ gitbook pdf . ./kubernetes-handbook.pdf
 pandoc --latex-engine=xelatex --template=pm-template input.md -o output.pdf
 ```
 
-## 贡献者
+## 如何贡献
+
+### 提issue
+
+如果你发现文档中的错误，或者有好的建议，不要犹豫，欢迎[提交issue](https://github.com/rootsongjc/kubernetes-handbook/issues/new)。
+
+### 发起Pull Request
+
+当你发现文章中明确的错误或者逻辑问题，在你自己的fork的分支中，创建一个新的branch，修改错误，push到你的branch，然后在[提交issue](https://github.com/rootsongjc/kubernetes-handbook/issues/new)后直接发起Pull Request。
+
+### 贡献文档
+
+#### 文档的组织规则
+
+- 如果要创建一个大的主题就在最顶层创建一个目录；
+- 全书五大主题，每个主题一个目录，其下不再设二级目录；
+- 所有的图片都放在最顶层的`images`目录下，原则上文章中用到的图片都保存在本地；
+- 所有的文档的文件名使用英文命名，可以包含数字和中划线；
+- `etc`、`manifests`目录专门用来保存配置文件和文档中用到的其他相关文件；
+
+#### 添加文档
+
+1. 在该文章相关主题的目录下创建文档；
+2. 在`SUMMARY.md`中在相应的章节下添加文章链接；
+3. 执行`gitbook server`测试是否报错，访问 http://localhost:4000 查看该文档是否出现在相应主题的目录下；
+4. 提交PR
+
+## 关于
 
 [Jimmy Song](http://rootsongjc.github.io/about)
-
-[opsnull](http://github.com/opsnull)
-
-[godliness](https://github.com/godliness/)
